@@ -99,29 +99,25 @@ class SparseAutoencoder(object):
         del_hid = numpy.multiply(numpy.dot(numpy.transpose(W2), del_out) + numpy.transpose(numpy.matrix(KL_div_grad)), 
                                  numpy.multiply(hidden_layer, 1 - hidden_layer))
         
-        """ Initialize gradients as arrays of zeros """
-        
-        W1_grad = numpy.zeros(W1.shape)
-        W2_grad = numpy.zeros(W2.shape)
-        b1_grad = numpy.zeros(b1.shape)
-        b2_grad = numpy.zeros(b2.shape)
-        
         """ Compute the gradient values by averaging partial derivatives
             Partial derivatives are averaged over all training examples """
-        
-        for i in xrange(input.shape[1]):
-        
-            W1_grad += numpy.dot(numpy.matrix(del_hid[:, i]),
-                                 numpy.matrix(input[:, i]))
-            W2_grad += numpy.dot(numpy.transpose(numpy.matrix(del_out[:, i])), 
-                                 numpy.matrix(hidden_layer[:, i]))
-            b1_grad += numpy.matrix(del_hid[:, i])
-            b2_grad += numpy.transpose(numpy.matrix(del_out[:, i]))
+            
+        W1_grad = numpy.dot(del_hid, numpy.transpose(input))
+        W2_grad = numpy.dot(del_out, numpy.transpose(hidden_layer))
+        b1_grad = numpy.sum(del_hid, axis = 1)
+        b2_grad = numpy.sum(del_out, axis = 1)
             
         W1_grad = W1_grad / input.shape[1] + self.lamda * W1
         W2_grad = W2_grad / input.shape[1] + self.lamda * W2
         b1_grad = b1_grad / input.shape[1]
         b2_grad = b2_grad / input.shape[1]
+        
+        """ Transform numpy matrices into arrays """
+        
+        W1_grad = numpy.array(W1_grad)
+        W2_grad = numpy.array(W2_grad)
+        b1_grad = numpy.array(b1_grad)
+        b2_grad = numpy.array(b2_grad)
         
         """ Unroll the gradient values and return as 'theta' gradient """
         
