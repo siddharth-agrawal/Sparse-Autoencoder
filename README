@@ -1,6 +1,6 @@
 -> This is a solution to the Sparse Autoencoder exercise in the Stanford UFLDL Tutorial(http://ufldl.stanford.edu/wiki/index.php/Exercise:Sparse_Autoencoder)
 -> The code has been written in Python using Scipy, Numpy and Matplotlib
--> Feel free to use the code in any way you like
+-> The code is bound by The MIT License (MIT)
 
 Running the code:
 

@@ -1,3 +1,5 @@
+# This piece of software is bound by The MIT License (MIT)
+# Copyright (c) 2013 Siddharth Agrawal
 # Code written by : Siddharth Agrawal
 # Email ID : siddharth.950@gmail.com
 
