@@ -64,9 +64,9 @@ class SparseAutoencoder(object):
         return (1 / (1 + numpy.exp(-x)))
 
     #######################################################################################
-    """ Returns gradient of 'theta' using Backpropagation algorithm """
+    """ Returns the cost of the Autoencoder and gradient at a particular 'theta' """
         
-    def thetaGradient(self, theta, input):
+    def sparseAutoencoderCost(self, theta, input):
         
         """ Extract weights and biases from 'theta' input """
         
@@ -83,17 +83,18 @@ class SparseAutoencoder(object):
         
         """ Estimate the average activation value of the hidden layers """
         
-        rho_cap = numpy.zeros(hidden_layer.shape[0])
-        
-        for i in xrange(input.shape[1]):
-        
-            rho_cap += hidden_layer[:, i]
-            
-        rho_cap /= input.shape[1]
+        rho_cap = numpy.sum(hidden_layer, axis = 1) / input.shape[1]
         
         """ Compute intermediate difference values using Backpropagation algorithm """
         
         diff = output_layer - input
+        
+        sum_of_squares_error = 0.5 * numpy.sum(numpy.multiply(diff, diff)) / input.shape[1]
+        weight_decay         = 0.5 * self.lamda * (numpy.sum(numpy.multiply(W1, W1)) +
+                                                   numpy.sum(numpy.multiply(W2, W2)))
+        KL_divergence        = self.beta * numpy.sum(self.rho * numpy.log(self.rho / rho_cap) +
+                                                    (1 - self.rho) * numpy.log((1 - self.rho) / (1 - rho_cap)))
+        cost                 = sum_of_squares_error + weight_decay + KL_divergence
         
         KL_div_grad = self.beta * (-(self.rho / rho_cap) + ((1 - self.rho) / (1 - rho_cap)))
         
@@ -123,50 +124,10 @@ class SparseAutoencoder(object):
         
         """ Unroll the gradient values and return as 'theta' gradient """
         
-        return numpy.concatenate((W1_grad.flatten(), W2_grad.flatten(),
-                                  b1_grad.flatten(), b2_grad.flatten()))
-        
-    #######################################################################################
-    """ Returns the cost of the Autoencoder at a particular 'theta' """
-        
-    def sparseAutoencoderCost(self, theta, input):
-    
-        """ Extract weights and biases from 'theta' input """
-    
-        W1 = theta[self.limit0 : self.limit1].reshape(self.hidden_size, self.visible_size)
-        W2 = theta[self.limit1 : self.limit2].reshape(self.visible_size, self.hidden_size)
-        b1 = theta[self.limit2 : self.limit3].reshape(self.hidden_size, 1)
-        b2 = theta[self.limit3 : self.limit4].reshape(self.visible_size, 1)
-        
-        """ Compute output layers by performing a feedforward pass
-            Computation is done for all the training inputs simultaneously """
-        
-        hidden_layer = self.sigmoid(numpy.dot(W1, input) + b1)
-        output_layer = self.sigmoid(numpy.dot(W2, hidden_layer) + b2)
-        
-        """ Estimate the average activation value of the hidden layers """
-        
-        rho_cap = numpy.zeros(hidden_layer.shape[0])
-        
-        for i in xrange(input.shape[1]):
-        
-            rho_cap += hidden_layer[:, i]
-            
-        rho_cap /= input.shape[1]
-        
-        """ Compute the three terms contributing to the cost """
-        
-        diff = output_layer - input
-        
-        sum_of_squares_error = 0.5 * numpy.sum(numpy.multiply(diff, diff)) / input.shape[1]
-        weight_decay         = 0.5 * self.lamda * (numpy.sum(numpy.multiply(W1, W1)) +
-                                                   numpy.sum(numpy.multiply(W2, W2)))
-        KL_divergence        = self.beta * numpy.sum(self.rho * numpy.log(self.rho / rho_cap) +
-                                                    (1 - self.rho) * numpy.log((1 - self.rho) / (1 - rho_cap)))
-        
-        """ Return the sum of the contributing terms """
-        
-        return sum_of_squares_error + weight_decay + KL_divergence
+        theta_grad = numpy.concatenate((W1_grad.flatten(), W2_grad.flatten(),
+                                        b1_grad.flatten(), b2_grad.flatten()))
+                                        
+        return [cost, theta_grad]
 
 ###########################################################################################
 """ Normalize the dataset provided as input """
@@ -285,7 +246,7 @@ def executeSparseAutoencoder():
     
     opt_solution  = scipy.optimize.minimize(encoder.sparseAutoencoderCost, encoder.theta, 
                                             args = (training_data,), method = 'L-BFGS-B', 
-                                            jac = encoder.thetaGradient, options = {'maxiter': max_iterations})
+                                            jac = True, options = {'maxiter': max_iterations})
     opt_theta     = opt_solution.x
     opt_W1        = opt_theta[encoder.limit0 : encoder.limit1].reshape(hidden_size, visible_size)
     
