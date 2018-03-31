@@ -8,6 +8,3 @@ Running the code:
 -> Put them in the same folder, and run the program by typing in 'python sparseAutoencoder.py' in the command line
 -> You should get an output similar to the file 'output.png'
 -> The code takes about one and a half minutes to execute on an i3 processor
-
-Code written by: Siddharth Agrawal
-Email ID: siddharth.950@gmail.com
